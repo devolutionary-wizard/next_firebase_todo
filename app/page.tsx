@@ -17,6 +17,7 @@ import Loading from "@/components/Loading";
 
 interface TodoType {
   todo: string;
+  isCompleted: boolean;
 }
 
 export default function Home(): React.JSX.Element {
@@ -40,6 +41,7 @@ export default function Home(): React.JSX.Element {
   };
 
   const createTodo = async (e: any): Promise<void> => {
+    let checkValid;
     setIsCreate(true);
     e.preventDefault(e);
     if (input === "") {
@@ -47,10 +49,22 @@ export default function Home(): React.JSX.Element {
       setIsCreate(false);
       return;
     }
-    await addDoc(collection(db, "todos"), {
-      todo: input,
-      isCompleted: false,
-    }).then((res) => setIsCreate(false));
+
+    for (let i = 0; i < todos.length; i++) {
+      if (todos[i].todo == input) {
+        checkValid = true;
+      }
+    }
+
+    if (checkValid) {
+      alert("Todo already have!, You can add input new one");
+      setIsCreate(false);
+    } else {
+      await addDoc(collection(db, "todos"), {
+        todo: input,
+        isCompleted: false,
+      }).then((res) => setIsCreate(false));
+    }
 
     setInput("");
   };
@@ -159,7 +173,7 @@ export default function Home(): React.JSX.Element {
               />
             ))
           ) : (
-            todos.map((todo: any, index: number) => (
+            todos.map((todo: TodoType, index: number) => (
               <Todo
                 key={index}
                 todo={todo}
