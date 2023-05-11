@@ -87,10 +87,10 @@ export default function Home(): React.JSX.Element {
   return (
     <div className="h-screen w-screen flex justify-center items-center p-4 bg-gradient-to-r from-[#101111] to-[#1CB5E0]">
       <div className="bg-slate-100 max-w-[500px] w-full m-auto rounded-md shadow-xl p-4">
-        <h3 className="text-3xl font-bold text-center text-gray-800 p-2">
+        <h3 className="text-3xl font-bold text-center text-gray-800 p-2 mb-5">
           Todo App
         </h3>
-        <div className="mb-3">
+        <div className="mb-3 ">
           <div className="relative mb-4 flex w-full flex-wrap items-stretch">
             <input
               type="search"
