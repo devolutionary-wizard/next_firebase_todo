@@ -1,113 +1,178 @@
-import Image from 'next/image'
+"use client";
+import React, { useState, useEffect } from "react";
+import { AiOutlinePlus, AiOutlineSearch } from "react-icons/ai";
+import {
+  query,
+  collection,
+  onSnapshot,
+  updateDoc,
+  doc,
+  addDoc,
+  deleteDoc,
+} from "firebase/firestore";
+import Todo from "@/components/Todo";
+import { db } from "@/firebase";
+import Empty from "@/components/Empty";
+import Loading from "@/components/Loading";
 
-export default function Home() {
+interface TodoType {
+  todo: string;
+}
+
+export default function Home(): React.JSX.Element {
+  const [todos, setTodos] = useState<TodoType[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isCreate, setIsCreate] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<TodoType[]>([]);
+  const [isSearch, setIsSearch] = useState<boolean>(false);
+
+  const handleSearch = (e: any) => {
+    const result = todos.filter((todo) => {
+      if (e.target.value == "") {
+        setIsSearch(false);
+        return;
+      }
+      setIsSearch(true);
+      return todo.todo.toLowerCase().includes(e.target.value.toLowerCase());
+    });
+    setSearchQuery(result);
+  };
+
+  const createTodo = async (e: any): Promise<void> => {
+    setIsCreate(true);
+    e.preventDefault(e);
+    if (input === "") {
+      alert("Please enter a valid todo");
+      setIsCreate(false);
+      return;
+    }
+    await addDoc(collection(db, "todos"), {
+      todo: input,
+      isCompleted: false,
+    }).then((res) => setIsCreate(false));
+
+    setInput("");
+  };
+
+  useEffect(() => {
+    getTodos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const getTodos = () => {
+    const q = query(collection(db, "todos"));
+    const data = onSnapshot(q, (querySnapshot): void => {
+      let todosArr: any = [];
+      querySnapshot.forEach((doc): void => {
+        todosArr.push({ ...doc.data(), id: doc.id });
+      });
+      setTimeout((): void => {
+        setIsLoading(false);
+      }, 2000);
+      setTodos(todosArr);
+    });
+    return () => data();
+  };
+
+  const toggleComplete = async (todo: any): Promise<void> => {
+    await updateDoc(doc(db, "todos", todo.id), {
+      isCompleted: !todo.isCompleted,
+    });
+  };
+
+  const deleteTodo = async (id: any): Promise<void> => {
+    await deleteDoc(doc(db, "todos", id));
+  };
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
+    <div className="h-screen w-screen flex justify-center items-center p-4 bg-gradient-to-r from-[#101111] to-[#1CB5E0]">
+      <div className="bg-slate-100 max-w-[500px] w-full m-auto rounded-md shadow-xl p-4">
+        <h3 className="text-3xl font-bold text-center text-gray-800 p-2">
+          Todo App
+        </h3>
+        <div className="mb-3">
+          <div className="relative mb-4 flex w-full flex-wrap items-stretch">
+            <input
+              type="search"
+              onChange={handleSearch}
+              className="relative m-0 -mr-0.5 block w-[1px] min-w-0 flex-auto rounded-l border border-solid border-neutral-300 bg-transparent bg-clip-padding px-3 py-[0.25rem] text-base font-normal leading-[1.6] text-neutral-700 outline-none transition duration-200 ease-in-out focus:z-[3] focus:border-primary focus:text-neutral-700 focus:shadow-[inset_0_0_0_1px_rgb(59,113,202)] focus:outline-none dark:border-neutral-600 dark:text-neutral-200 dark:placeholder:text-neutral-200 dark:focus:border-primary"
+              placeholder="Search"
+              aria-label="Search"
+              aria-describedby="button-addon1"
             />
-          </a>
+
+            <button
+              className="relative z-[2] flex items-center rounded-r bg-slate-600 px-6 py-2.5 text-xs font-medium uppercase leading-tight text-black shadow-md transition duration-150 ease-in-out hover:bg-primary-700 hover:shadow-lg focus:bg-primary-700 focus:shadow-lg focus:outline-none focus:ring-0 active:bg-primary-800 active:shadow-lg"
+              type="button"
+              id="button-addon1"
+              data-te-ripple-init
+              data-te-ripple-color="light">
+              <AiOutlineSearch />
+            </button>
+          </div>
         </div>
+        <form onSubmit={createTodo} className="flex justify-between">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            className="border p-2 w-full text-xl"
+            type="text"
+            placeholder="Add Todo"
+          />
+          <button className="border p-4 ml-2 bg-purple-500 text-slate-100">
+            {isCreate ? (
+              <div role="status" className="text-center">
+                <svg
+                  aria-hidden="true"
+                  className="w-8 h-8 mr-2 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+                  viewBox="0 0 100 101"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                    fill="currentColor"
+                  />
+                  <path
+                    d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                    fill="currentFill"
+                  />
+                </svg>
+                <span className="sr-only">Loading...</span>
+              </div>
+            ) : (
+              <AiOutlinePlus size={30} />
+            )}
+          </button>
+        </form>
+        <ul>
+          {isLoading ? (
+            <Loading />
+          ) : todos.length == 0 || (isSearch && searchQuery.length == 0) ? (
+            <Empty />
+          ) : isSearch ? (
+            searchQuery.map((e, index) => (
+              <Todo
+                key={index}
+                todo={e}
+                toggleComplete={toggleComplete}
+                deleteTodo={deleteTodo}
+              />
+            ))
+          ) : (
+            todos.map((todo: any, index: number) => (
+              <Todo
+                key={index}
+                todo={todo}
+                toggleComplete={toggleComplete}
+                deleteTodo={deleteTodo}
+              />
+            ))
+          )}
+        </ul>
+        {todos.length < 1 ? null : (
+          <p className="text-center p-2">{`You have ${todos.length} todos`}</p>
+        )}
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+    </div>
+  );
 }
