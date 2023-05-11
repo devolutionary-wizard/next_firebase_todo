@@ -5,7 +5,7 @@ import { FaPencilAlt, FaRegTrashAlt } from "react-icons/fa";
 
 const Todo = ({ todo, toggleComplete, deleteTodo }: any) => {
   const [showModal, setShowModal] = useState(false);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState<string>(todo.todo);
 
   const editTodo = async (e: any) => {
     e.preventDefault(e);
@@ -19,8 +19,6 @@ const Todo = ({ todo, toggleComplete, deleteTodo }: any) => {
       todo: input,
       isCompleted: false,
     }).then((res) => setShowModal(false));
-
-    setInput("");
   };
   return (
     <li
@@ -66,11 +64,10 @@ const Todo = ({ todo, toggleComplete, deleteTodo }: any) => {
                         onSubmit={editTodo}
                         className="flex flex-col justify-between">
                         <input
-                          value={input ?? todo.todo}
+                          value={input}
                           onChange={(e) => setInput(e.target.value)}
                           className="border p-2 w-full text-xl"
                           type="text"
-                          placeholder="Add Todo"
                         />
                         <div className="pt-5" />
                         <button className="border p-4 ml-2 bg-purple-500 text-slate-100">
