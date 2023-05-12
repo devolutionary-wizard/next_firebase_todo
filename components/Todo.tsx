@@ -20,7 +20,7 @@ const Todo = ({ todo, toggleComplete, deleteTodo }: any) => {
     const itemRef = doc(db, "todos", todo.id);
     await updateDoc(itemRef, {
       todo: input,
-      isCompleted: false,
+      isCompleted: todo.isCompleted,
     }).then((res) => {
       setShowModal(false);
       setIsLoading(false);
