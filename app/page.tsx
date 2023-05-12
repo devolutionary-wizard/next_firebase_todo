@@ -51,7 +51,7 @@ export default function Home(): React.JSX.Element {
     }
 
     for (let i = 0; i < todos.length; i++) {
-      if (todos[i].todo.toLowerCase().includes(input.toLowerCase())) {
+      if (todos[i].todo.toLowerCase() == input.toLowerCase()) {
         checkValid = true;
       }
     }
