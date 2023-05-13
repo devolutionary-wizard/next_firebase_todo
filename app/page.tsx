@@ -27,6 +27,7 @@ export default function Home(): React.JSX.Element {
   const [isCreate, setIsCreate] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<TodoType[]>([]);
   const [isSearch, setIsSearch] = useState<boolean>(false);
+  const [error, setErorr] = useState<boolean>(false);
 
   const handleSearch = (e: any) => {
     const result = todos.filter((todo) => {
@@ -35,7 +36,12 @@ export default function Home(): React.JSX.Element {
         return;
       }
       setIsSearch(true);
-      return todo.todo.toLowerCase().includes(e.target.value.toLowerCase());
+
+      if (todo.todo == e.target.value) {
+        return todo;
+      }
+
+      // return todo.todo.toLowerCase().includes(e.target.value.toLowerCase());
     });
     setSearchQuery(result);
   };
@@ -44,14 +50,14 @@ export default function Home(): React.JSX.Element {
     let checkValid;
     setIsCreate(true);
     e.preventDefault(e);
-    if (input === "") {
+    if (input.trim() === "") {
       alert("Please enter a valid todo");
       setIsCreate(false);
       return;
     }
 
     for (let i = 0; i < todos.length; i++) {
-      if (todos[i].todo.toLowerCase() == input.toLowerCase()) {
+      if (todos[i].todo == input.trim()) {
         checkValid = true;
       }
     }
@@ -78,14 +84,33 @@ export default function Home(): React.JSX.Element {
     const q = query(collection(db, "todos"));
     const data = onSnapshot(q, (querySnapshot): void => {
       let todosArr: any = [];
+      let testing: any = [];
       querySnapshot.forEach((doc): void => {
         todosArr.push({ ...doc.data(), id: doc.id });
       });
+
+      testing = todosArr.sort(function (a: any, b: any) {
+        if (a.todo < b.todo) {
+          return -1;
+        }
+        if (a.todo > b.todo) {
+          return 1;
+        }
+        return 0;
+      });
+
+      // if (1 == 1) {
+      //   setErorr(true);
+      //   throw new Error("Error ");
+      // }
+
       setTimeout((): void => {
         setIsLoading(false);
       }, 2000);
-      setTodos(todosArr);
+
+      setTodos(testing);
     });
+
     return () => data();
   };
 
@@ -98,12 +123,14 @@ export default function Home(): React.JSX.Element {
   const deleteTodo = async (id: any): Promise<void> => {
     await deleteDoc(doc(db, "todos", id));
   };
+
   return (
     <div className="h-screen w-screen flex justify-center items-center p-4 bg-gradient-to-r from-[#101111] to-[#1CB5E0]">
       <div className="bg-slate-100 max-w-[500px] w-full m-auto rounded-md shadow-xl p-4">
         <h3 className="text-3xl font-bold text-center text-gray-800 p-2 mb-5">
           Todo App
         </h3>
+
         <div className="mb-3 ">
           <div className="relative mb-4 flex w-full flex-wrap items-stretch">
             <input
@@ -159,8 +186,10 @@ export default function Home(): React.JSX.Element {
           </button>
         </form>
         <ul>
-          {isLoading ? (
+          {isLoading && !error ? (
             <Loading />
+          ) : error ? (
+            <p className="">Error</p>
           ) : todos.length == 0 || (isSearch && searchQuery.length == 0) ? (
             <Empty />
           ) : isSearch ? (

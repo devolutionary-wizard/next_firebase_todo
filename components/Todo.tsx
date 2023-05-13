@@ -11,6 +11,7 @@ const Todo = ({ todo, toggleComplete, deleteTodo }: any) => {
   const editTodo = async (e: any) => {
     setIsLoading(true);
     e.preventDefault(e);
+
     if (input === "") {
       alert("Please enter a valid todo");
       setIsLoading(false);
@@ -30,8 +31,8 @@ const Todo = ({ todo, toggleComplete, deleteTodo }: any) => {
     <li
       className={
         todo.isCompleted
-          ? "flex justify-between bg-slate-400 p-4 my-2 capitalize"
-          : "flex justify-between bg-slate-200 p-4 my-2 capitalize"
+          ? "flex justify-between bg-slate-400 p-4 my-2"
+          : "flex justify-between bg-slate-200 p-4 my-2"
       }>
       <div className="flex">
         <input
